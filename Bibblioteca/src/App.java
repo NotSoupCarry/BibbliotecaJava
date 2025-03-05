@@ -6,8 +6,6 @@ public class App {
     public static void main(String[] args) throws Exception {
         System.out.println("Hello, World!");
     }
-
-
 }
 
 // Classe per la connessione al database
@@ -27,7 +25,7 @@ class DBContext {
     }
 }
 
-
+// classe dei libri
 class Libro {
     private int id;
     private String nome;
@@ -97,6 +95,16 @@ class Libro {
     }
 }
 
-// metodi gestione db
+// classe con metodi gestione db
 class Biblioteca {
+}
+
+// classe dei menu
+class Menu{
+
+}
+
+// classe dei controlli
+class controlli{
+
 }
