@@ -10,3 +10,10 @@ CREATE TABLE `bibbliotecadb`.`libri` (
   PRIMARY KEY (`ID`));
 
 
+CREATE TABLE `bibbliotecadb`.`utenti` (
+  `ID` INT NOT NULL AUTO_INCREMENT,
+  `username` VARCHAR(255) NOT NULL,
+  `password` VARCHAR(255) NULL,
+  `ruolo` ENUM('Utente', 'Libraio') NOT NULL,
+  PRIMARY KEY (`ID`),
+  UNIQUE INDEX `username_UNIQUE` (`username` ASC) VISIBLE);

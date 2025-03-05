@@ -102,6 +102,28 @@ class Libro {
     }
 }
 
+// classe utenti
+class Utente {
+    private int id;
+    // private String username;
+    // private String password;
+    private String ruolo;
+
+    public Utente(int id, String username, String ruolo) {
+        this.id = id;
+        this.ruolo = ruolo;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getRuolo() {
+        return ruolo;
+    }
+
+}
+
 // classe con metodi gestione db
 class Biblioteca {
     private Connection conn;
@@ -253,6 +275,74 @@ class Biblioteca {
             e.printStackTrace();
         }
     }
+
+    // Metodo per registrare un nuovo utente
+    public void registrazioneUtente(Scanner scanner) {
+        System.out.print("Inserisci un username: ");
+        String username = Controlli.controlloInputStringhe(scanner);
+
+        System.out.print("Inserisci una password: ");
+        String password = Controlli.controlloInputStringhe(scanner);
+
+        // Controllo se l'utente esiste già
+        if (utenteEsiste(username)) {
+            System.out.println("Questo username è già in uso. Scegli un altro.");
+            return;
+        }
+
+        String query = "INSERT INTO utenti (username, password, ruolo) VALUES (?, ?, 'Utente')";
+        try (PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, username);
+            pstmt.setString(2, password); // Idealmente, dovresti criptare la password
+            pstmt.executeUpdate();
+            System.out.println("Registrazione completata con successo! Ora puoi effettuare il login.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Metodo per verificare se un utente esiste già
+    private boolean utenteEsiste(String username) {
+        String query = "SELECT COUNT(*) FROM utenti WHERE username = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next() && rs.getInt(1) > 0) {
+                return true;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // Metodo per il login
+    public Utente loginUtente(Scanner scanner) {
+        System.out.print("Inserisci il tuo username: ");
+        String username = Controlli.controlloInputStringhe(scanner);
+
+        System.out.print("Inserisci la tua password: ");
+        String password = Controlli.controlloInputStringhe(scanner);
+
+        String query = "SELECT ID, ruolo FROM utenti WHERE username = ? AND password = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, username);
+            pstmt.setString(2, password);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                int id = rs.getInt("ID");
+                String ruolo = rs.getString("ruolo");
+                System.out.println("Login effettuato con successo! Ruolo: " + ruolo);
+                return new Utente(id, username, ruolo);
+            } else {
+                System.out.println("Credenziali errate. Riprova.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
 
 // classe dei menu
@@ -261,10 +351,93 @@ class Menu {
     public static void menuPrincipale(Scanner scanner, Biblioteca biblioteca) {
         int scelta;
         boolean exitMainMenu = false;
-        System.out.println("\n==== Benvenuto in BIBBLIOTECA INSANA ====");
+        System.out.println("\n==== Benvenuto in BIBBLIOTECA INSANA ====\n");
+        System.out.println("==== REGISTRATI PER PRENDERE IN PRESTITO I LIBRI ====\n");
 
         while (!exitMainMenu) {
-            System.out.println("\n==== Menu ====");
+            System.out.println("\n==== Menu Libraio====");
+            System.out.println("1. Registrati");
+            System.out.println("2. Login");
+            System.out.println("3. Mostra tutti i libri");
+            System.out.println("4. Esci");
+
+            System.out.print("Scegli un'opzione (1-4): ");
+            scelta = Controlli.controlloInputInteri(scanner);
+            scanner.nextLine();
+
+            switch (scelta) {
+                case 1:
+                    biblioteca.registrazioneUtente(scanner);
+                    break;
+                case 2:
+                    Utente utenteLoggato = biblioteca.loginUtente(scanner);
+                    if (utenteLoggato != null) {
+                        if (utenteLoggato.getRuolo().equals("Libraio")) {
+                            menuLibraio(scanner, biblioteca);
+                        } else {
+                            menuUtente(scanner, biblioteca);
+                        }
+                    }
+                    break;
+                case 3:
+                    biblioteca.stampaTuttiLibri();
+                    break;
+                case 4:
+                    System.out.println("Uscita dal programma.");
+                    exitMainMenu = true;
+                    break;
+                default:
+                    System.out.println("Opzione non valida! Riprova.");
+            }
+        }
+    }
+
+    // Menu per gli utenti normali
+    public static void menuUtente(Scanner scanner, Biblioteca biblioteca) {
+        boolean exitUserMenu = false;
+
+        while (!exitUserMenu) {
+            System.out.println("\n==== Menu Utente ====");
+            System.out.println("1. Mostra tutti i libri");
+            System.out.println("2. Prendere in prestito un libro");
+            System.out.println("3. Restituire un libro");
+            System.out.println("4. Logout");
+
+            System.out.print("Scegli un'opzione (1-4): ");
+            int scelta = Controlli.controlloInputInteri(scanner);
+            scanner.nextLine(); 
+
+            switch (scelta) {
+                case 1:
+                    biblioteca.stampaTuttiLibri();
+                    break;
+                case 2:
+                    System.out.print("Inserisci il nome del libro da prendere in prestito: ");
+                    String libroDaPrendere = scanner.nextLine();
+                    biblioteca.prestaLibro(libroDaPrendere);
+                    break;
+                case 3:
+                    System.out.print("Inserisci il nome del libro da restituire: ");
+                    String libroDaRestituire = scanner.nextLine();
+                    biblioteca.restituisciLibro(libroDaRestituire);
+                    break;
+                case 4:
+                    System.out.println("Logout effettuato.");
+                    exitUserMenu = true;
+                    break;
+                default:
+                    System.out.println("Opzione non valida! Riprova.");
+            }
+        }
+    }
+
+    // menu libraio
+    public static void menuLibraio(Scanner scanner, Biblioteca biblioteca) {
+        int sceltaMenuLibraio;
+        boolean exitMenuLibraio = false;
+
+        while (!exitMenuLibraio) {
+            System.out.println("\n==== Menu Libraio====");
             System.out.println("1. Mostra tutti i Libri");
             System.out.println("2. Presta Libro");
             System.out.println("3. Restituisci Libro");
@@ -272,11 +445,11 @@ class Menu {
             System.out.println("5. Elimina Libro");
             System.out.println("6. Esci");
 
-            System.out.print("Scegli un'opzione (1-4): ");
-            scelta = Controlli.controlloInputInteri(scanner);
+            System.out.print("Scegli un'opzione (1-6): ");
+            sceltaMenuLibraio = Controlli.controlloInputInteri(scanner);
             scanner.nextLine();
 
-            switch (scelta) {
+            switch (sceltaMenuLibraio) {
                 case 1:
                     biblioteca.stampaTuttiLibri();
                     break;
@@ -313,7 +486,7 @@ class Menu {
                     break;
                 case 6:
                     System.out.println("Uscita dal programma.");
-                    exitMainMenu = true;
+                    exitMenuLibraio = true;
                     break;
                 default:
                     System.out.println("Opzione non valida! Riprova.");
