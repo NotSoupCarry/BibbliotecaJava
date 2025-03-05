@@ -90,16 +90,9 @@ Se vuoi contribuire al progetto, sentiti libero di forkare il repository, fare l
 
 ---
 
-## 📄 **Licenza**
+## 💬 **SETUP DB**
 
-Distribuito sotto la Licenza MIT. Vedi il file [LICENSE](LICENSE) per i dettagli.
-
----
-
-## 💬 **Contatti**
-
-- [GitHub](https://github.com/NotSoupCarry)
-- [Email](mailto:conzagiuseppee@gmail.com)
+VEDERE LA CARTELLA <b>DBqueryes</b> PER TUTTE LE QUERY DI SETUP SUL DB
 
 ---
 
