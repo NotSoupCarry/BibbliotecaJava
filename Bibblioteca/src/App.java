@@ -105,6 +105,6 @@ class Menu{
 }
 
 // classe dei controlli
-class controlli{
+class Controlli{
 
 }
