@@ -52,7 +52,7 @@ Benvenuto in **BIBBLIOTECA INSANA**, un'applicazione gestionale per una bibliote
    ```
 
 ### 2. **Configura il database**
-
+   - VEDERE LA CARTELLA <b>DBqueryes</b> PER TUTTE LE QUERY DI SETUP SUL DB
    - Assicurati di avere un server MySQL in esecuzione e crea un database chiamato `bibliotecadb`.
    - Crea le tabelle necessarie (utenti, libri, prestiti) nel database seguendo lo schema fornito nel codice o adattandolo alle tue esigenze.
 
@@ -77,22 +77,11 @@ Benvenuto in **BIBBLIOTECA INSANA**, un'applicazione gestionale per una bibliote
 
 ---
 
-## 📝 **Screenshot** (opzionale)
-
-![Screenshot](https://via.placeholder.com/800x400.png?text=BIBBLIOTECA+INSANA+App)  
-*Interfaccia utente dell'app in esecuzione.*
-
----
 
 ## 🔧 **Contributi**
 
 Se vuoi contribuire al progetto, sentiti libero di forkare il repository, fare le tue modifiche e inviare una pull request. Ogni contributo è benvenuto!
 
----
-
-## 💬 **SETUP DB**
-
-VEDERE LA CARTELLA <b>DBqueryes</b> PER TUTTE LE QUERY DI SETUP SUL DB
 
 ---
 
