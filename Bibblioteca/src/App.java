@@ -118,6 +118,10 @@ class Utente {
         return id;
     }
 
+    public String getUsername() {
+        return username;
+    }
+
     public String getRuolo() {
         return ruolo;
     }
@@ -150,6 +154,32 @@ class Biblioteca {
                     // Stampa i dettagli del libro
                     System.out.println(nome + " | " + dataPubblicazione + ", Copie Totali: " + quantitaTotale +
                             ", Prestati: " + quantitaPrestati + ", Disponibili: " + disponibili);
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // Metodo per stampare i libri presi in prestito da un utente
+    public void stampaLibriInPrestito(int utenteId) {
+        if (conn != null) {
+            String query = "SELECT l.nome, p.data_prestito FROM prestiti p JOIN libri l ON p.libro_id = l.ID WHERE p.utente_id = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, utenteId);
+                ResultSet rs = stmt.executeQuery();
+
+                System.out.println("\n=== Libri in prestito ===");
+                boolean haPrestiti = false;
+                while (rs.next()) {
+                    haPrestiti = true;
+                    String nome = rs.getString("nome");
+                    Date dataPrestito = rs.getDate("data_prestito");
+                    System.out.println("- " + nome + " (Preso in prestito il: " + dataPrestito + ")");
+                }
+
+                if (!haPrestiti) {
+                    System.out.println("Non hai libri in prestito.");
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -202,24 +232,24 @@ class Biblioteca {
     public void restituisciLibro(String nomeLibro, int idUtente) {
         if (conn != null) {
             String query = "SELECT p.id, p.id_libro FROM prestiti p " +
-                           "JOIN libri l ON p.id_libro = l.ID " +
-                           "WHERE l.nome = ? AND p.id_utente = ? AND p.restituito = false";
+                    "JOIN libri l ON p.id_libro = l.ID " +
+                    "WHERE l.nome = ? AND p.id_utente = ? AND p.restituito = false";
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setString(1, nomeLibro);
                 stmt.setInt(2, idUtente);
                 ResultSet rs = stmt.executeQuery();
-    
+
                 if (rs.next()) {
                     int prestitoId = rs.getInt("id");
                     int libroId = rs.getInt("id_libro");
-    
+
                     // Segna il prestito come restituito
                     String updatePrestito = "UPDATE prestiti SET restituito = true WHERE id = ?";
                     try (PreparedStatement updateStmt = conn.prepareStatement(updatePrestito)) {
                         updateStmt.setInt(1, prestitoId);
                         updateStmt.executeUpdate();
                     }
-    
+
                     // Aggiorna il numero di libri prestati nella tabella libri
                     String updateLibro = "UPDATE libri SET quantita_prestati = quantita_prestati - 1 WHERE ID = ?";
                     try (PreparedStatement updateLibroStmt = conn.prepareStatement(updateLibro)) {
@@ -235,7 +265,6 @@ class Biblioteca {
             }
         }
     }
-    
 
     // Metodo per controllare se esiste il libro
     public boolean libroEsiste(String nome) throws SQLException {
@@ -344,7 +373,7 @@ class Biblioteca {
             if (rs.next()) {
                 int id = rs.getInt("ID");
                 String ruolo = rs.getString("ruolo");
-                System.out.println("Login effettuato con successo! Ruolo: " + ruolo);
+                System.out.println("Login effettuato con successo!!!");
                 return new Utente(id, username, ruolo);
             } else {
                 System.out.println("Credenziali errate. Riprova.");
@@ -406,13 +435,14 @@ class Menu {
     // Menu per gli utenti normali
     public static void menuUtente(Scanner scanner, Biblioteca biblioteca, Utente utente) {
         boolean exitUserMenu = false;
-
+        System.out.println("\nBenvenuto " + utente.getUsername());
         while (!exitUserMenu) {
             System.out.println("\n==== Menu Utente ====");
             System.out.println("1. Mostra tutti i libri");
-            System.out.println("2. Prendere in prestito un libro");
-            System.out.println("3. Restituire un libro");
-            System.out.println("4. Logout");
+            System.out.println("1. Mostra tutti i tuoi libri in prestito");
+            System.out.println("3. Prendere in prestito un libro");
+            System.out.println("4. Restituire un libro");
+            System.out.println("5. Logout");
 
             System.out.print("Scegli un'opzione (1-4): ");
             int scelta = Controlli.controlloInputInteri(scanner);
@@ -423,16 +453,19 @@ class Menu {
                     biblioteca.stampaTuttiLibri();
                     break;
                 case 2:
+                    biblioteca.stampaLibriInPrestito(utente.getId());
+                    break;
+                case 3:
                     System.out.print("Inserisci il nome del libro da prendere in prestito: ");
                     String libroDaPrendere = scanner.nextLine();
                     biblioteca.prestaLibro(libroDaPrendere, utente.getId());
                     break;
-                case 3:
+                case 4:
                     System.out.print("Inserisci il nome del libro da restituire: ");
                     String libroDaRestituire = scanner.nextLine();
                     biblioteca.restituisciLibro(libroDaRestituire, utente.getId());
                     break;
-                case 4:
+                case 5:
                     System.out.println("Logout effettuato.");
                     exitUserMenu = true;
                     break;
