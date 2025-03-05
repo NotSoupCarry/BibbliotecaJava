@@ -1,12 +1,12 @@
+CREATE DATABASE IF NOT EXISTS bibbliotecadb;
+USE ristorantedb;
+
 CREATE TABLE `bibbliotecadb`.`libri` (
   `ID` INT NOT NULL AUTO_INCREMENT,
-  `Nome` VARCHAR(255) NOT NULL,
+  `nome` VARCHAR(255) UNIQUE NOT NULL,
   `quantita_totale` INT NOT NULL,
+  data_pubblicazione` DATETIME NOT NULL AFTER `nome`,
   `quantita_prestati` INT NOT NULL DEFAULT 0,
   PRIMARY KEY (`ID`));
 
-
-ALTER TABLE `bibbliotecadb`.`libri` 
-ADD COLUMN `data_pubblicazione` DATETIME NOT NULL AFTER `nome`,
-CHANGE COLUMN `Nome` `nome` VARCHAR(255) NOT NULL ;
 
