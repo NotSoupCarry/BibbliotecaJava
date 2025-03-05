@@ -1,4 +1,7 @@
+import java.sql.*;
+import java.util.*;
 import java.util.Date;
+<<<<<<< Updated upstream
 import java.util.Scanner;
 import java.sql.*;
 
@@ -10,6 +13,13 @@ public class App {
         Menu.menuPrincipale(scanner, biblioteca);
 
         scanner.close();
+=======
+
+public class App {
+    public static void main(String[] args) {
+        Biblioteca biblioteca = new Biblioteca();
+        biblioteca.menu();
+>>>>>>> Stashed changes
     }
 }
 
@@ -17,7 +27,7 @@ public class App {
 class DBContext {
     private static final String DB_URL = "jdbc:mysql://localhost:3306/bibbliotecadb";
     private static final String DB_USERNAME = "root";
-    private static final String DB_PASSWORD = "root";
+    private static final String DB_PASSWORD = "Cerotto!0";
 
     public static Connection connessioneDatabase() {
         try {
@@ -30,7 +40,10 @@ class DBContext {
     }
 }
 
+<<<<<<< Updated upstream
 // classe dei libri
+=======
+>>>>>>> Stashed changes
 class Libro {
     private int id;
     private String nome;
@@ -38,7 +51,6 @@ class Libro {
     private int quantitaPrestati;
     private Date dataPubblicazione;
 
-    // Costruttore
     public Libro(int id, String nome, int quantitaTotale, int quantitaPrestati, Date dataPubblicazione) {
         this.id = id;
         this.nome = nome;
@@ -47,45 +59,21 @@ class Libro {
         this.dataPubblicazione = dataPubblicazione;
     }
 
-    // Getters e Setters
     public int getId() {
         return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     public String getNome() {
         return nome;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
     public int getQuantitaTotale() {
         return quantitaTotale;
     }
 
-    public void setQuantitaTotale(int quantitaTotale) {
-        this.quantitaTotale = quantitaTotale;
-    }
-
-    public int getQuantitaPrestati() {
-        return quantitaPrestati;
-    }
-
-    public void setQuantitaPrestati(int quantitaPrestati) {
-        this.quantitaPrestati = quantitaPrestati;
-    }
 
     public Date getDataPubblicazione() {
         return dataPubblicazione;
-    }
-
-    public void setDataPubblicazione(Date dataPubblicazione) {
-        this.dataPubblicazione = dataPubblicazione;
     }
 
     @Override
@@ -100,11 +88,15 @@ class Libro {
     }
 }
 
+<<<<<<< Updated upstream
 // classe con metodi gestione db
+=======
+>>>>>>> Stashed changes
 class Biblioteca {
     private Connection conn;
 
     public Biblioteca() {
+<<<<<<< Updated upstream
         this.conn = DBContext.connessioneDatabase();
     }
 
@@ -283,4 +275,101 @@ class Controlli {
         } while (valore < 0);
         return valore;
     }
+=======
+        conn = DBContext.connessioneDatabase();
+        if (conn == null) {
+            System.out.println("Errore di connessione al database.");
+        }
+    }
+
+    public boolean libroEsiste(String nome) throws SQLException {
+        String query = "SELECT COUNT(*) FROM libri WHERE nome = ?";
+        PreparedStatement pstmt = conn.prepareStatement(query);
+        pstmt.setString(1, nome);
+        ResultSet rs = pstmt.executeQuery();
+        if (rs.next() && rs.getInt(1) > 0) {
+            return true;
+        }
+        return false;
+    }
+
+    public void aggiungiLibro(Libro libro) {
+        try {
+            if (libroEsiste(libro.getNome())) {
+                System.out.println("Il libro è già presente nella biblioteca.");
+                return;
+            }
+
+            String query = "INSERT INTO libri (nome, quantitaTotale, quantitaPrestati, dataPubblicazione) VALUES (?, ?, 0, ?)";
+            PreparedStatement pstmt = conn.prepareStatement(query);
+            pstmt.setString(1, libro.getNome());
+            pstmt.setInt(2, libro.getQuantitaTotale());
+            pstmt.setDate(4, new java.sql.Date(libro.getDataPubblicazione().getTime()));
+            pstmt.executeUpdate();
+            System.out.println("Libro aggiunto con successo.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void rimuoviLibro(String nome) {
+        try {
+            String query = "DELETE FROM libri WHERE nome = ?";
+            PreparedStatement pstmt = conn.prepareStatement(query);
+            pstmt.setString(1, nome);
+            int rowsDeleted = pstmt.executeUpdate();
+            if (rowsDeleted > 0) {
+                System.out.println("Libro rimosso con successo.");
+            } else {
+                System.out.println("Il libro non esiste nella biblioteca.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void menu() {
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("\nMenu Biblioteca:");
+            System.out.println("1. Aggiungi libro");
+            System.out.println("2. Rimuovi libro");
+            System.out.println("3. Esci");
+            System.out.print("Scelta: ");
+            int scelta = scanner.nextInt();
+            scanner.nextLine(); 
+
+            switch (scelta) {
+                case 1:
+                    System.out.print("Nome del libro: ");
+                    String nome = scanner.nextLine();
+                    System.out.print("Quantità totale: ");
+                    int quantitaTotale = scanner.nextInt();
+
+                    
+
+                    System.out.print("Data di pubblicazione (YYYY-MM-DD): ");
+                    String dataStr = scanner.nextLine();
+                    try {
+                        java.sql.Date dataPubblicazione = java.sql.Date.valueOf(dataStr);
+                        aggiungiLibro(new Libro(0, nome, quantitaTotale, 0, dataPubblicazione));
+                    } catch (IllegalArgumentException e) {
+                        System.out.println("Formato data non valido.");
+                    }
+                    break;
+                case 2:
+                    System.out.print("Nome del libro da rimuovere: ");
+                    rimuoviLibro(scanner.nextLine());
+                    break;
+                case 3:
+                    System.out.println("Chiusura del programma.");
+                    scanner.close();
+                    return;
+                default:
+                    System.out.println("Scelta non valida.");
+            }
+        }
+    }
+>>>>>>> Stashed changes
 }
