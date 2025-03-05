@@ -158,9 +158,8 @@ class Biblioteca {
     }
 
     // Metodo per prestare un libro
-    public void prestaLibro(String nomeLibro) {
+    public void prestaLibro(String nomeLibro, int idUtente) {
         if (conn != null) {
-            // Ricerca il libro per nome
             String query = "SELECT ID, quantita_totale, quantita_prestati FROM libri WHERE nome = ?";
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setString(1, nomeLibro);
@@ -171,9 +170,16 @@ class Biblioteca {
                     int quantitaTotale = rs.getInt("quantita_totale");
                     int quantitaPrestati = rs.getInt("quantita_prestati");
 
-                    // Verifica se ci sono libri disponibili per il prestito
                     if (quantitaTotale > quantitaPrestati) {
-                        // Se sì, aumenta i libri prestati
+                        // Registra il prestito
+                        String prestitoQuery = "INSERT INTO prestiti (id_utente, id_libro, restituito) VALUES (?, ?, false)";
+                        try (PreparedStatement prestitoStmt = conn.prepareStatement(prestitoQuery)) {
+                            prestitoStmt.setInt(1, idUtente);
+                            prestitoStmt.setInt(2, libroId);
+                            prestitoStmt.executeUpdate();
+                        }
+
+                        // Aggiorna i libri prestati
                         String updateQuery = "UPDATE libri SET quantita_prestati = quantita_prestati + 1 WHERE ID = ?";
                         try (PreparedStatement updateStmt = conn.prepareStatement(updateQuery)) {
                             updateStmt.setInt(1, libroId);
@@ -181,7 +187,7 @@ class Biblioteca {
                             System.out.println("Libro prestato con successo!");
                         }
                     } else {
-                        System.out.println("Non ci sono copie disponibili da prestare per il libro selezionato");
+                        System.out.println("Non ci sono copie disponibili per il prestito.");
                     }
                 } else {
                     System.out.println("Libro non trovato.");
@@ -193,38 +199,43 @@ class Biblioteca {
     }
 
     // Metodo per restituire un libro
-    public void restituisciLibro(String nomeLibro) {
+    public void restituisciLibro(String nomeLibro, int idUtente) {
         if (conn != null) {
-            // Ricerca il libro per nome
-            String query = "SELECT ID, quantita_totale, quantita_prestati FROM libri WHERE nome = ?";
+            String query = "SELECT p.id, p.id_libro FROM prestiti p " +
+                           "JOIN libri l ON p.id_libro = l.ID " +
+                           "WHERE l.nome = ? AND p.id_utente = ? AND p.restituito = false";
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setString(1, nomeLibro);
+                stmt.setInt(2, idUtente);
                 ResultSet rs = stmt.executeQuery();
-
+    
                 if (rs.next()) {
-                    int libroId = rs.getInt("ID");
-                    int quantitaPrestati = rs.getInt("quantita_prestati");
-
-                    // Verifica se ci sono libri prestati da restituire
-                    if (quantitaPrestati > 0) {
-                        // Se sì, diminuisce il numero di libri prestati
-                        String updateQuery = "UPDATE libri SET quantita_prestati = quantita_prestati - 1 WHERE ID = ?";
-                        try (PreparedStatement updateStmt = conn.prepareStatement(updateQuery)) {
-                            updateStmt.setInt(1, libroId);
-                            updateStmt.executeUpdate();
-                            System.out.println("Libro restituito con successo!");
-                        }
-                    } else {
-                        System.out.println("Non ci sono copie disponibili da restituire per il libro selezionato");
+                    int prestitoId = rs.getInt("id");
+                    int libroId = rs.getInt("id_libro");
+    
+                    // Segna il prestito come restituito
+                    String updatePrestito = "UPDATE prestiti SET restituito = true WHERE id = ?";
+                    try (PreparedStatement updateStmt = conn.prepareStatement(updatePrestito)) {
+                        updateStmt.setInt(1, prestitoId);
+                        updateStmt.executeUpdate();
+                    }
+    
+                    // Aggiorna il numero di libri prestati nella tabella libri
+                    String updateLibro = "UPDATE libri SET quantita_prestati = quantita_prestati - 1 WHERE ID = ?";
+                    try (PreparedStatement updateLibroStmt = conn.prepareStatement(updateLibro)) {
+                        updateLibroStmt.setInt(1, libroId);
+                        updateLibroStmt.executeUpdate();
+                        System.out.println("Libro restituito con successo!");
                     }
                 } else {
-                    System.out.println("Libro non trovato.");
+                    System.out.println("Non hai preso in prestito questo libro o lo hai già restituito.");
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
     }
+    
 
     // Metodo per controllare se esiste il libro
     public boolean libroEsiste(String nome) throws SQLException {
@@ -375,7 +386,7 @@ class Menu {
                         if (utenteLoggato.getRuolo().equals("Libraio")) {
                             menuLibraio(scanner, biblioteca);
                         } else {
-                            menuUtente(scanner, biblioteca);
+                            menuUtente(scanner, biblioteca, utenteLoggato);
                         }
                     }
                     break;
@@ -393,7 +404,7 @@ class Menu {
     }
 
     // Menu per gli utenti normali
-    public static void menuUtente(Scanner scanner, Biblioteca biblioteca) {
+    public static void menuUtente(Scanner scanner, Biblioteca biblioteca, Utente utente) {
         boolean exitUserMenu = false;
 
         while (!exitUserMenu) {
@@ -405,7 +416,7 @@ class Menu {
 
             System.out.print("Scegli un'opzione (1-4): ");
             int scelta = Controlli.controlloInputInteri(scanner);
-            scanner.nextLine(); 
+            scanner.nextLine();
 
             switch (scelta) {
                 case 1:
@@ -414,12 +425,12 @@ class Menu {
                 case 2:
                     System.out.print("Inserisci il nome del libro da prendere in prestito: ");
                     String libroDaPrendere = scanner.nextLine();
-                    biblioteca.prestaLibro(libroDaPrendere);
+                    biblioteca.prestaLibro(libroDaPrendere, utente.getId());
                     break;
                 case 3:
                     System.out.print("Inserisci il nome del libro da restituire: ");
                     String libroDaRestituire = scanner.nextLine();
-                    biblioteca.restituisciLibro(libroDaRestituire);
+                    biblioteca.restituisciLibro(libroDaRestituire, utente.getId());
                     break;
                 case 4:
                     System.out.println("Logout effettuato.");
@@ -439,11 +450,9 @@ class Menu {
         while (!exitMenuLibraio) {
             System.out.println("\n==== Menu Libraio====");
             System.out.println("1. Mostra tutti i Libri");
-            System.out.println("2. Presta Libro");
-            System.out.println("3. Restituisci Libro");
-            System.out.println("4. Aggiungi Libro");
-            System.out.println("5. Elimina Libro");
-            System.out.println("6. Esci");
+            System.out.println("2. Aggiungi Libro");
+            System.out.println("3. Elimina Libro");
+            System.out.println("4. Esci");
 
             System.out.print("Scegli un'opzione (1-6): ");
             sceltaMenuLibraio = Controlli.controlloInputInteri(scanner);
@@ -454,16 +463,6 @@ class Menu {
                     biblioteca.stampaTuttiLibri();
                     break;
                 case 2:
-                    System.out.print("Inserisci il nome del libro da prestare: ");
-                    String nomeLibroDaPrestare = Controlli.controlloInputStringhe(scanner);
-                    biblioteca.prestaLibro(nomeLibroDaPrestare);
-                    break;
-                case 3:
-                    System.out.print("Inserisci il nome del libro da restituire: ");
-                    String nomeLibroDaRestituire = Controlli.controlloInputStringhe(scanner);
-                    biblioteca.restituisciLibro(nomeLibroDaRestituire);
-                    break;
-                case 4:
                     System.out.print("Nome del libro: ");
                     String nome = scanner.nextLine();
                     System.out.print("Quantità totale: ");
@@ -480,11 +479,11 @@ class Menu {
                         System.out.println("Formato data non valido.");
                     }
                     break;
-                case 5:
+                case 3:
                     System.out.print("Nome del libro da rimuovere: ");
                     biblioteca.rimuoviLibro(scanner.nextLine());
                     break;
-                case 6:
+                case 4:
                     System.out.println("Uscita dal programma.");
                     exitMenuLibraio = true;
                     break;
