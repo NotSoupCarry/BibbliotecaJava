@@ -164,12 +164,15 @@ class Biblioteca {
     // Metodo per stampare i libri presi in prestito da un utente
     public void stampaLibriInPrestito(int utenteId) {
         if (conn != null) {
-            String query = "SELECT l.nome, p.data_prestito FROM prestiti p JOIN libri l ON p.libro_id = l.ID WHERE p.utente_id = ?";
+            String query = "SELECT l.nome, p.data_prestito FROM prestiti p " +
+                    "JOIN libri l ON p.id_libro = l.id " +
+                    "WHERE p.id_utente = ? AND p.restituito = false";
+
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setInt(1, utenteId);
                 ResultSet rs = stmt.executeQuery();
 
-                System.out.println("\n=== Libri in prestito ===");
+                System.out.println("\n=== Libri attualmente in prestito ===");
                 boolean haPrestiti = false;
                 while (rs.next()) {
                     haPrestiti = true;
