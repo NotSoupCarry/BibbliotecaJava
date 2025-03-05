@@ -105,12 +105,12 @@ class Libro {
 // classe utenti
 class Utente {
     private int id;
-    // private String username;
-    // private String password;
+    private String username;
     private String ruolo;
 
     public Utente(int id, String username, String ruolo) {
         this.id = id;
+        this.username = username;
         this.ruolo = ruolo;
     }
 
